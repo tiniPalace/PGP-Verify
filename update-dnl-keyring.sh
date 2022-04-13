@@ -10,7 +10,6 @@ gpg_options="--no-default-keyring --keyring ./$keyring_folder/$dnl_keyring_fn --
 html_fn="darknetlive.html"
 html_filtered_fn="darknetlive_filtered.html"
 urls_fn="temp_urls.txt"
-database_fn="dnl_database.csv"
 
 #######################################################
 ## Parse DNL site for pgp files.
@@ -95,8 +94,8 @@ wait
 
 [[ $verbose -eq 1 ]] && echo -e "\nGenerating keyring and database based on downloaded PGP keys."
 
-[[ -e ./$database_fn ]] && mv ./$database_fn "./${database_fn}_backup"
-echo -n "" > ./$database_fn
+[[ -e ./$dnl_database_fn ]] && mv ./$dnl_database_fn "./${dnl_database_fn}_backup"
+echo -n "" > ./$dnl_database_fn
 
 # Setup keyring file-structure.
 
@@ -132,7 +131,7 @@ for i in ${!pgp_urls[@]}; do
             gpg_return=$?
             # Only add url to database if the key was successfully imported to the gpg keyring.
             if [[ $gpg_return -eq 0 ]]; then
-                echo "\"$name\",\"$onion_url\",\"$first_uid\",\"$first_fprint\"" >> ./$database_fn
+                echo "\"$name\",\"$onion_url\",\"$first_uid\",\"$first_fprint\"" >> ./$dnl_database_fn
             elif [[ $verbose -eq 1 ]]; then
                 echo -e "ERROR entry $i: gpg returned error-code $gpg_return.\n$name not added to database." >&2
                 gpg $gpg_options --import-options keep-ownertrust --import $download_file_path
@@ -152,10 +151,10 @@ done
 #######################################################
 
 num_keys_in_keyring=$(gpg $gpg_options --list-keys | sed -nE "/^pub/p" | wc -l)
-num_keys_in_database=$(cat ./$database_fn | wc -l)
+num_keys_in_database=$(cat ./$dnl_database_fn | wc -l)
 
 # Remove backup database if everything was successful
-[[ $num_keys_in_database -gt 0 ]] && rm "./${database_fn}_backup"
+[[ $num_keys_in_database -gt 0 ]] && rm "./${dnl_database_fn}_backup"
 if [[ $keep_downloads -ne 1 ]]; then
     rm -r ./$download_dir
     echo "Cleaned up downloads at './$download_dir/'"
