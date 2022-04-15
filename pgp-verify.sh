@@ -2,7 +2,7 @@
 
 source .pgp-verifyrc
 mirrors_fn="mirrors.txt"
-sign_out_fn="signed_mirrors.txt"
+signed_out_fn="signed_mirrors.txt"
 keyserver_output_fn="keyserver_output.txt"
 gpg_options="--homedir $keyring_folder --no-default-keyring" 
 signed_by_authority=0
@@ -15,7 +15,7 @@ signed_by_authority=0
 # Remove all temporary files if they exist.
 function cleanTemporaryFiles () {
     [[ -e ./$mirrors_fn ]] && rm ./$mirrors_fn
-    [[ -e ./$signed_out_fn ]] && rm ./$sign_out_fn
+    [[ -e ./$signed_out_fn ]] && rm ./$signed_out_fn
     [[ -e ./$keyserver_output_fn ]] && rm ./$keyserver_output_fn
 }
 
@@ -142,13 +142,13 @@ if [[ $ctype == "text/html" ]]; then
 fi
 
 # Extract only signed message of file.
-gpg_error=$(gpg $gpg_options --output ./$sign_out_fn --verify ./$mirrors_fn 2>&1 | sed -nE "/no valid OpenPGP data found/p")
+gpg_error=$(gpg $gpg_options --output ./$signed_out_fn --verify ./$mirrors_fn 2>&1 | sed -nE "/no valid OpenPGP data found/p")
 if [[ $gpg_error != "" ]]; then
-    errorExit "ERROR: Could not find any PGP-signed content if file retrieved from \n > $validation_url."
+    errorExit "ERROR: Could not find any PGP-signed content of file retrieved from \n > $validation_url."
 fi
 
 # Create a list of all urls contained in the signed message.
-links=$(cat ./$sign_out_fn | sed -nE "s/(^([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|[h]+[t]+[p]+[s]*[:]+\/[\/]+[^\/><\" ]*)|^.*[^a-z0-9]([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|[h]+[t]+[p]+[s]*[:]+\/[\/]+[^\/<>\" ]*)).*$/\2\3/p")
+links=$(cat ./$signed_out_fn | sed -nE "s/(^([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|[h]+[t]+[p]+[s]*[:]+\/[\/]+[^\/><\" ]*)|^.*[^a-z0-9]([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|[h]+[t]+[p]+[s]*[:]+\/[\/]+[^\/<>\" ]*)).*$/\2\3/p")
 
 
 ###############################################
@@ -190,6 +190,7 @@ fi
 
 sign_fingerprint=$(gpg $gpg_options --verify ./$mirrors_fn 2>&1 | sed -n -E 's/^.* ([0-9A-Z]{40})$/\1/p')
 user_ID=""
+pf_IDs=()
 user_ID_DNL=""
 onion_url=""
 
@@ -199,6 +200,7 @@ onion_url=""
 signedByKeyring $mirrors_fn $pgpfail_keyring_fn
 if [[ $? -eq 0 ]]; then
     user_ID=$(fprToUID $sign_fingerprint $pgpfail_keyring_fn)
+    pf_IDs=( $(grep $sign_fingerprint ./$pf_database_fn | sed -nE "s/^\"([^\"]*)\".*$/\1/p") ) 
 fi
 
 ###############################################
@@ -275,6 +277,14 @@ if [[ $verbose -eq 1 ]]; then
     echo -e "Key fingerprint:\t$sign_fingerprint"
     [[ $user_ID != "" ]] && echo -e "User ID:\t\t$user_ID"
     [[ $onion_url != "" ]] && echo -e "DNL URL:\t\t$onion_url"
+
+    # Printing names associated with the key fingerprint on pgp.fail
+    if [[ ${#pf_IDs[@]} -gt 0 ]]; then
+        echo -e "PGP.fail identities:"
+        for ID in ${pf_IDs[@]}; do
+            echo -e " - $ID"
+        done
+    fi
 
     echo -e "All signed mirrors:"
     for i in ${!urls[@]}; do
