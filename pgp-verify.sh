@@ -6,6 +6,7 @@ signed_out_fn="signed_mirrors.txt"
 keyserver_output_fn="keyserver_output.txt"
 gpg_options="--homedir $keyring_folder --no-default-keyring" 
 signed_by_authority=0
+custom_mirrors=""
 
 
 ###############################################
@@ -15,7 +16,7 @@ signed_by_authority=0
 # Remove all temporary files if they exist.
 function cleanTemporaryFiles () {
     if [[ $keep_temporary_files -ne 1 ]]; then
-        [[ -e ./$mirrors_fn ]] && rm ./$mirrors_fn
+        [[ -e ./$mirrors_fn && $custom_mirrors == "" ]] && rm ./$mirrors_fn
         [[ -e ./$signed_out_fn ]] && rm ./$signed_out_fn
         [[ -e ./$keyserver_output_fn ]] && rm ./$keyserver_output_fn
     fi
@@ -113,20 +114,53 @@ function onionsFromFingerprint () {
 
 
 ###############################################
+## Parsing command line arguments
+###############################################
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -i|--input)
+            custom_mirrors="$2"
+            shift
+            shift
+            ;;
+        -*|--*)
+            echo "ERROR: Unknown option $1"
+            errorExit
+            ;;
+        *)
+            POS_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+set -- "${POS_ARGS[@]}"
+
+
+###############################################
 ## Retrieving mirrors
 ###############################################
 
 # Find last argument
 validation_url=${@: -1}
 
-# Check if input is a valid url
+# Check if input is a valid url and try to download the mirrors file at its
+# location unless a custom mirrors file has been selected.
 if [[ $validation_url =~ ^([h]+[t]+[p]+[s]*[:]+\/[\/]+)?([a-zA-Z0-9\.\-]+|[a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion)(\/[a-zA-Z0-9\/\.:_&=\?%\+,;@\-]*)?$ ]]; then
     validation_url=$(correctScheme $validation_url)
-    response=$(downloadFile "$validation_url" "./$mirrors_fn")
-    ctype=$(echo $response | sed -nE "s/^([a-z]*\/[a-z]*)[;,]? .*$/\1/p")
-    http_code=$(echo $response | sed -nE "s/.*, ([0-9]{3})$/\1/p")
-    if [[ $http_code == "200" ]]; then
-        chmod 600 $mirrors_fn
+    if [[ $custom_mirrors == "" ]]; then
+        response=$(downloadFile "$validation_url" "./$mirrors_fn")
+        ctype=$(echo $response | sed -nE "s/^([a-z]*\/[a-z]*)[;,]? .*$/\1/p")
+        http_code=$(echo $response | sed -nE "s/.*, ([0-9]{3})$/\1/p")
+        [[ $verbose -eq 1 ]] && echo "Website returned $ctype, $http_code".
+        if [[ $http_code == "200" ]]; then
+            chmod 600 $mirrors_fn
+        else
+            errorExit
+        fi
+    elif [[ -e $custom_mirrors ]]; then
+        mirrors_fn=$custom_mirrors
+        ctype="text/plain"
     else
         errorExit
     fi
@@ -134,12 +168,11 @@ else
     errorExit
 fi
 
-[[ $verbose -eq 1 ]] && echo "Website returned $ctype, $http_code".
 validation_domain_url=$(correctDomainURL $validation_url)
 
 # Remove HTML tags if present.
 if [[ $ctype == "text/html" ]]; then
-    echo -e "Warning: HTML file retrived. Will try to interpret signature by removing HTML tags."
+    echo -e "Warning: HTML file encountered. Will try to interpret signature by removing HTML tags."
     sed -i -E "s/<[^>]*>//g" ./$mirrors_fn
 fi
 
@@ -147,6 +180,7 @@ fi
 [[ -e ./$signed_out_fn ]] && rm ./$signed_out_fn
 gpg_error=$(gpg $gpg_options --output ./$signed_out_fn --verify ./$mirrors_fn 2>&1 | sed -nE "/no valid OpenPGP data found/p")
 if [[ $gpg_error != "" ]]; then
+    [[ $custom_mirrors != "" ]] && errorExit "ERROR: Could not find any PGP-signed content in file $mirrors_fn"
     errorExit "ERROR: Could not find any PGP-signed content of file retrieved from \n > $validation_url."
 fi
 
