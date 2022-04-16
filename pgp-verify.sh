@@ -14,9 +14,11 @@ signed_by_authority=0
 
 # Remove all temporary files if they exist.
 function cleanTemporaryFiles () {
-    [[ -e ./$mirrors_fn ]] && rm ./$mirrors_fn
-    [[ -e ./$signed_out_fn ]] && rm ./$signed_out_fn
-    [[ -e ./$keyserver_output_fn ]] && rm ./$keyserver_output_fn
+    if [[ $keep_temporary_files -ne 1 ]]; then
+        [[ -e ./$mirrors_fn ]] && rm ./$mirrors_fn
+        [[ -e ./$signed_out_fn ]] && rm ./$signed_out_fn
+        [[ -e ./$keyserver_output_fn ]] && rm ./$keyserver_output_fn
+    fi
 }
 
 # Exit with usage message.
@@ -111,14 +113,14 @@ function onionsFromFingerprint () {
 
 
 ###############################################
-## Retriving mirrors
+## Retrieving mirrors
 ###############################################
 
 # Find last argument
 validation_url=${@: -1}
 
 # Check if input is a valid url
-if [[ $validation_url =~ ^([h]+[t]+[p]+[s]*[:]+\/[\/]+)?([a-zA-Z0-9\.\-\/]*|[a-z2-7]{56}\.onion(\/.*)?|[a-z2-7]{16}\.onion(\/.*)?)$ ]]; then
+if [[ $validation_url =~ ^([h]+[t]+[p]+[s]*[:]+\/[\/]+)?([a-zA-Z0-9\.\-]+|[a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion)(\/[a-zA-Z0-9\/\.:_&=\?%\+,;@\-]*)?$ ]]; then
     validation_url=$(correctScheme $validation_url)
     response=$(downloadFile "$validation_url" "./$mirrors_fn")
     ctype=$(echo $response | sed -nE "s/^([a-z]*\/[a-z]*)[;,]? .*$/\1/p")
@@ -142,20 +144,21 @@ if [[ $ctype == "text/html" ]]; then
 fi
 
 # Extract only signed message of file.
+[[ -e ./$signed_out_fn ]] && rm ./$signed_out_fn
 gpg_error=$(gpg $gpg_options --output ./$signed_out_fn --verify ./$mirrors_fn 2>&1 | sed -nE "/no valid OpenPGP data found/p")
 if [[ $gpg_error != "" ]]; then
     errorExit "ERROR: Could not find any PGP-signed content of file retrieved from \n > $validation_url."
 fi
 
 # Create a list of all urls contained in the signed message.
-links=$(cat ./$signed_out_fn | sed -nE "s/(^([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|[h]+[t]+[p]+[s]*[:]+\/[\/]+[^\/><\" ]*)|^.*[^a-z0-9]([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|[h]+[t]+[p]+[s]*[:]+\/[\/]+[^\/<>\" ]*)).*$/\2\3/p")
+links=$(cat ./$signed_out_fn | sed -nE "s/^[ ]*([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|([h]+[t]+[p]+[s]*[:]+\/[\/]+)?[A-Za-z0-9\.\-]+)(\/[a-zA-Z0-9\/\.:_&=\?%\+,;@\-]*)?[ ]*$/\1/p")
 
 
 ###############################################
 ## Checking that input url is in mirrors list
 ###############################################
 
-urls=()
+domain_urls=()
 validation_url_index=-1
 
 # Search through list of urls in mirrors file to see if the domain of the url is
@@ -169,7 +172,7 @@ do
         validation_url_in_list=1
         validation_url_index=$i
     fi
-    urls+=( "$url" )
+    domain_urls+=( "$url" )
     i=$(( i+1 ))
 done
 
@@ -221,7 +224,7 @@ if [[ $? -eq 0 ]]; then
     found_included=0
     included_dnl_index=0
     for i in ${!dnl_onions[@]}; do
-        for url in ${urls[@]}; do
+        for url in ${domain_urls[@]}; do
             #echo -e "Checking\n${dnl_onions[$i]}\n$url"
             if [[ "$url" == "${dnl_onions[$i]}" ]]; then
                 found_included=$(( found_included+1 ))
@@ -268,6 +271,7 @@ else
 fi
 
 
+
 ###############################################
 ## Printing results and exit
 ###############################################
@@ -276,7 +280,14 @@ if [[ $verbose -eq 1 ]]; then
     echo -e "\n---------------------------------------------------------------------------"
     echo -e "Key fingerprint:\t$sign_fingerprint"
     [[ $user_ID != "" ]] && echo -e "User ID:\t\t$user_ID"
-    [[ $onion_url != "" ]] && echo -e "DNL URL:\t\t$onion_url"
+    if [[ $onion_url != "" ]]; then
+        echo -e "DNL URL:"
+        if [[ $validation_domain_url == $onion_url ]]; then
+            echo -e " > \033[1m$onion_url\033[0m"
+        else
+            echo -e " - $onion_url"
+        fi
+    fi
 
     # Printing names associated with the key fingerprint on pgp.fail
     if [[ ${#pf_IDs[@]} -gt 0 ]]; then
@@ -287,11 +298,11 @@ if [[ $verbose -eq 1 ]]; then
     fi
 
     echo -e "All signed mirrors:"
-    for i in ${!urls[@]}; do
+    for i in ${!domain_urls[@]}; do
         if [[ $i -eq $validation_url_index ]]; then
-            echo -e " > \033[1m${urls[$i]}\033[0m"
+            echo -e " > \033[1m${domain_urls[$i]}\033[0m"
         else
-            echo -e " - ${urls[$i]}"
+            echo -e " - ${domain_urls[$i]}"
         fi
     done
     echo -e "---------------------------------------------------------------------------\n"
