@@ -1,0 +1,24 @@
+# Global variables shared among scripts.
+
+download_dir=".tmp_pgps"
+verbose=1
+keep_downloads=1
+use_old_downloads=1
+keep_temporary_files=1
+port_number=9050
+time_limit=30
+
+keyring_folder=".keyrings"
+dnl_keyring_fn="dnl-keyring.kbx"
+pgpfail_keyring_fn="pgp.fail-keyring.kbx"
+openpgp_keyring_fn="openpgp-keyring.kbx"
+gpg_fn="gpg.conf"
+dnl_database_fn="dnl_database.csv"
+pf_database_fn="pgpfail_database.csv"
+
+curl_headers="User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
+
+ok="\033[1;96m[OK]\033[0m"
+no="\033[1;91m[ X]\033[0m"
+partially="\033[1;93m[--]\033[0m"

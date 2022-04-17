@@ -22,12 +22,26 @@ function cleanTemporaryFiles () {
     fi
 }
 
+function usageMessage () {
+    echo -e "pgp-verify.sh (PGP-Verify)\nLicense: MIT License <https://opensource.org/licenses/MIT>"
+    echo -e "This is free software: you are free to change and redistribute it."
+    echo -e "There is NO WARRANTY, to the extent permitted by law.\n"
+    echo -e "Usage: ${0##*/} [options] <url>"
+    echo -e "Verifies that the url inserted is trusted by a number of independent key authorities in order to avoid phishing attacks.\n"
+    echo -e "Options:\n"
+    echo -e " -i,\t--input <file path>\t\tSpecify PGP-signed mirrors file."
+    echo -e " -t,\t--connection-timeout <num>\tSet time to wait before giving up connecting to keyserver."
+    echo -e " -k,\t--keep-files\t\t\tKeep temporary files produced by output."
+    echo -e ""
+}
+
 # Exit with usage message.
 function errorExit () {
     if [[ $# -gt 0 ]]; then
         echo -e "$1" >&2
     else
-        echo -e "ERROR: '${0##*/}' needs an argument containing a valid url on the form\n:~$ ${0##*/} [-ceiklnps] http[s]://[xxx.]xxxxxxxxx.xxxx" >&2
+        echo -e "ERROR: Invalid input for '${0##*/}'\n"
+        usageMessage
     fi
     cleanTemporaryFiles
     exit 1
@@ -122,6 +136,19 @@ while [[ $# -gt 0 ]]; do
         -i|--input)
             custom_mirrors="$2"
             shift
+            shift
+            ;;
+        -t|--connection-timeout)
+            time_limit=$2
+            shift
+            shift
+            ;;
+        -k|--keep-files)
+            keep_temporary_files=1
+            shift
+            ;;
+        -s|--silent|--quiet)
+            verbose=0
             shift
             ;;
         -*|--*)
@@ -290,7 +317,7 @@ fi
 ###############################################
 
 echo "keyserver hkp://zkaan2xfbuxia2wpf7ofnkbz6r5zdbbvxbunvp5g2iebopbfc4iqmbad.onion" > ./$keyring_folder/$gpg_fn
-gpg $gpg_options --keyring ./$keyring_folder/$openpgp_keyring_fn --options ./$keyring_folder/$gpg_fn --auto-key-locate keyserver --recv-keys $sign_fingerprint &> ./$keyserver_output_fn
+timeout --preserve-status ${time_limit}s gpg $gpg_options --keyring ./$keyring_folder/$openpgp_keyring_fn --options ./$keyring_folder/$gpg_fn --auto-key-locate keyserver --recv-keys $sign_fingerprint &> ./$keyserver_output_fn
 ret_status=$?
 [[ $verbose -eq 1 ]] && echo -en "Signing key on openpgp:\t\t"
 if [[ $ret_status -eq 0 ]]; then
