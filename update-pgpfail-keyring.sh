@@ -188,7 +188,7 @@ fi
 num_keyring_keys=$(gpg $gpg_options --list-keys | sed -nE "/^pub/p" | wc -l)
 num_db_entries=$(cat ./$pf_database_fn | wc -l)
 
-if [[ $num_db_entries -gt 0 ]]; then
+if [[ $num_db_entries -gt 0 && -e "./${pf_database_fn}_backup" ]]; then
     rm "./${pf_database_fn}_backup"
 fi
 

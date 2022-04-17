@@ -2,9 +2,9 @@
 
 download_dir=".tmp_pgps"
 verbose=1
-keep_downloads=1
-use_old_downloads=1
-keep_temporary_files=1
+keep_downloads=0
+use_old_downloads=0
+keep_temporary_files=0
 port_number=9050
 time_limit=30
 

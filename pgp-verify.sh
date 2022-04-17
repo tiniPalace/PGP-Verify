@@ -22,6 +22,13 @@ function cleanTemporaryFiles () {
     fi
 }
 
+function cleanArchiveFiles () {
+    [[ -d ./$keyring_folder ]] && rm -r ./$keyring_folder
+    [[ -e ./$dnl_database_fn ]] && rm ./$dnl_database_fn
+    [[ -e ./$pf_database_fn ]] && rm ./$pf_database_fn
+    [[ -d ./$download_dir ]] && rm -r ./$download_dir
+}
+
 function usageMessage () {
     echo -e "pgp-verify.sh (PGP-Verify)\nLicense: MIT License <https://opensource.org/licenses/MIT>"
     echo -e "This is free software: you are free to change and redistribute it."
@@ -151,6 +158,14 @@ while [[ $# -gt 0 ]]; do
             verbose=0
             shift
             ;;
+        -w|--wipe)
+            keep_temporary_files=0
+            cleanTemporaryFiles
+            cleanArchiveFiles
+            [[ $verbose -eq 1 ]] && echo -e "Wiped all temporary files."
+            exit 0
+            shift
+            ;;
         -*|--*)
             echo "ERROR: Unknown option $1"
             errorExit
@@ -162,6 +177,33 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 set -- "${POS_ARGS[@]}"
+
+
+###############################################
+## Checking for databases and keyrings
+###############################################
+
+# If the pgp.fail database or keyring is missing.
+if [[ ! -e ./$pf_database_fn || ! -e ./$keyring_folder/$pgpfail_keyring_fn ]]; then
+    echo -n "Can't find pgp.fail data. Run 'update-pgpfail-keyring.sh' to re-download database and keyring? (y/n) "
+    read ans
+    if [[ $ans =~ [yY] ]]; then
+        echo -e "\n---------------------------------------------------------------------------"
+        ./update-pgpfail-keyring.sh
+        echo -e "---------------------------------------------------------------------------\n"
+    fi
+fi
+
+# Checking if dnl database or keyring is missing
+if [[ ! -e ./$dnl_database_fn || ! -e ./$keyring_folder/$dnl_keyring_fn ]]; then
+    echo -n "Can't find DNL data. Run 'update-dnl-keyring.sh' to re-download database and keyring? (y/n) "
+    read ans
+    if [[ $ans =~ [yY] ]]; then
+        echo -e "\n---------------------------------------------------------------------------"
+        ./update-dnl-keyring.sh
+        echo -e "---------------------------------------------------------------------------\n"
+    fi
+fi
 
 
 ###############################################

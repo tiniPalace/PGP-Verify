@@ -18,7 +18,7 @@ urls_fn="temp_urls.txt"
 # Only download html file when needed.
 if [[ ! -e $html_fn || $use_old_downloads -ne 1 ]]; then
     [[ $verbose -eq 1 ]] && echo "Downloading main html file"
-    curl $curl_options http://darkzzx4avcsuofgfez5zq75cqc4mprjvfqywo45dfcaxrwqg6qrlfid.onion/onions/ > $html_fn
+    curl $curl_options -H "$curl_headers" http://darkzzx4avcsuofgfez5zq75cqc4mprjvfqywo45dfcaxrwqg6qrlfid.onion/onions/ > $html_fn
 
     [[ $verbose -eq 1 ]] && echo "Filtering file for valid links and building internal arrays."
     # Filter out section containing urls
@@ -76,7 +76,7 @@ function processPGP() {
     download_file_path="./$download_dir/tmp_dnl_pgp$1.asc"
     url=${pgp_urls[$1]}
     if [[ ! -e $download_file_path || $use_old_downloads -ne 1 ]]; then
-        curl $curl_options -o $download_file_path "$url"
+        curl $curl_options -H "$curl_headers" -o $download_file_path "$url"
     fi
 }
 
@@ -142,7 +142,7 @@ for i in ${!pgp_urls[@]}; do
         fi
     elif [[ $verbose -eq 1 ]]; then
         echo -e "ERROR importing from\n\t$name @ $url\nnow located in file $download_file_path." >&2
-        echo -e "GPG returned error:\n\t${error}skipping." >&2
+        echo -e "GPG returned error:\n\t${error}\nskipping." >&2
     fi
 done
 
@@ -154,7 +154,7 @@ num_keys_in_keyring=$(gpg $gpg_options --list-keys | sed -nE "/^pub/p" | wc -l)
 num_keys_in_database=$(cat ./$dnl_database_fn | wc -l)
 
 # Remove backup database if everything was successful
-[[ $num_keys_in_database -gt 0 ]] && rm "./${dnl_database_fn}_backup"
+[[ $num_keys_in_database -gt 0 && -e "./${dnl_database_fn}_backup" ]] && rm "./${dnl_database_fn}_backup"
 if [[ $keep_downloads -ne 1 ]]; then
     rm -r ./$download_dir
     echo "Cleaned up downloads at './$download_dir/'"
