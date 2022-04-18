@@ -206,4 +206,4 @@ fi
 
 [[ $verbose -eq 1 ]] && echo -e "\nSuccessfully generated keyring containing $num_keys_in_keyring keys, and database containing $num_keys_in_database urls"
 
-
+exit 0

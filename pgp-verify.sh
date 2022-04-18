@@ -200,31 +200,31 @@ set -- "${POS_ARGS[@]}"
 ###############################################
 
 # If the pgp.fail database or keyring is missing.
-if [[ ! -e ./$pf_database_fn || ! -e ./$keyring_folder/$pgpfail_keyring_fn ]]; then
+if [[ ! -e ./$pf_database_fn || $(cat ./$pf_database_fn) == "" || ! -e ./$keyring_folder/$pgpfail_keyring_fn ]]; then
     echo -n "Can't find pgp.fail data. Run 'update-pgpfail-keyring.sh' to re-download database and keyring? (y/n) "
     read ans
     if [[ $ans =~ [yY] ]]; then
         if [[ $verbose -eq 1 ]]; then
             echo -e "\n---------------------------------------------------------------------------"
-            ./update-pgpfail-keyring.sh -p $port_number -t $time_limit
+            ./$pf_script_fn -p $port_number -t $time_limit || errorExit "ERROR: Failed to update pgpfail database and keyring. Please try to run '$pf_script_fn' manually.\n"
             echo -e "---------------------------------------------------------------------------\n"
         else
-            ./update-pgpfail-keyring.sh -p $port_number -t $time_limit -s
+            ./$pf_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update pgpfail database and keyring. Please try to run '$pf_script_fn' manually.\n"
         fi
     fi
 fi
 
 # Checking if dnl database or keyring is missing
-if [[ ! -e ./$dnl_database_fn || ! -e ./$keyring_folder/$dnl_keyring_fn ]]; then
-    echo -n "Can't find DNL data. Run 'update-dnl-keyring.sh' to re-download database and keyring? (y/n) "
+if [[ ! -e ./$dnl_database_fn || $(cat ./$dnl_database_fn) == "" || ! -e ./$keyring_folder/$dnl_keyring_fn ]]; then
+    echo -n "Can't find DNL data. Run 'update-dnl-keyring.sh' to re-download database and keyring.\n (y/n) "
     read ans
     if [[ $ans =~ [yY] ]]; then
         if [[ $verbose -eq 1 ]]; then
             echo -e "\n---------------------------------------------------------------------------"
-            ./update-dnl-keyring.sh -p $port_number -t $time_limit
+            ./$dnl_script_fn -p $port_number -t $time_limit || errorExit "ERROR: Failed to update darknetlive database and keyring. Please try to run '$dnl_script_fn' manually.\n"
             echo -e "---------------------------------------------------------------------------\n"
         else
-            ./update-dnl-keyring.sh -p $port_number -t $time_limit -s
+            ./$dnl_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update darknetlive database and keyring. Please try to run '$dnl_script_fn' manually.\n"
         fi
     fi
 fi

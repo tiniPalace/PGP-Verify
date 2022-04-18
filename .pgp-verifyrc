@@ -17,6 +17,9 @@ gpg_fn="gpg.conf"
 dnl_database_fn="dnl_database.csv"
 pf_database_fn="pgpfail_database.csv"
 
+pf_script_fn="update-pgpfail-keyring.sh"
+dnl_script_fn="update-dnl-keyring.sh"
+
 curl_headers="User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
 
