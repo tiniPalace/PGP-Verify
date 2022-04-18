@@ -96,9 +96,6 @@ while IFS= read -r line; do
     pgp_urls+=( "$pgp_url" )
 done < "$urls_fn"
 
-rm $urls_fn
-rm $html_filtered_fn
-
 num_pgp_urls=${#pgp_urls[@]}
 if [[ $num_pgp_urls -ne $num_filtered_entries || $num_pgp_urls -ne ${#names[@]} || $num_pgp_urls -ne ${#onion_urls[@]} ]]; then
     echo -e "\nERROR: Problem creating arrays from $num_filtered_entries filtered urls. Num of entries\npgp_urls: $num_pgp_urls, names: ${#names[@]}, onion_urls: ${#onion_urls[@]}"
@@ -199,9 +196,14 @@ num_keys_in_database=$(cat ./$dnl_database_fn | wc -l)
 
 # Remove backup database if everything was successful
 [[ $num_keys_in_database -gt 0 && -e "./${dnl_database_fn}_backup" ]] && rm "./${dnl_database_fn}_backup"
+# Remove processed files of main html
+[[ -e ./$urls_fn ]] && rm $urls_fn
+[[ -e ./$html_filtered_fn ]] && rm $html_filtered_fn
+# Remove downloaded files.
 if [[ $keep_downloads -ne 1 ]]; then
-    rm -r ./$download_dir
-    echo "Cleaned up downloads at './$download_dir/'"
+    [[ -e ./$html_fn ]] && rm $html_fn
+    [[ -d ./$download_dir ]] && rm -r ./$download_dir
+    [[ $verbose -eq 1 ]] && echo "Cleaned up downloads at './$download_dir/'"
 fi
 
 [[ $verbose -eq 1 ]] && echo -e "\nSuccessfully generated keyring containing $num_keys_in_keyring keys, and database containing $num_keys_in_database urls"

@@ -155,7 +155,7 @@ for i in ${!html_urls[@]}; do
         pgp_urls+=( "$html_sub_root/$pgp_sub_url" )
         pgp_names+=( "${html_names[$i]}" )
     else
-        echo -e "Warning: Could not find mirror signing key url\n @ $html_url" >&2
+        echo -e "Warning: Could not find mirror signing key url\n - $html_url" >&2
     fi
 done
 
@@ -214,24 +214,22 @@ for i in ${!pgp_urls[@]}; do
             echo "Warning: Entry $i: $url did not return a valid public key." >&2
         fi
     elif [[ $verbose -eq 1 ]]; then
-        echo -e "ERROR importing from\n\t$name @ $url\nnow located in file $download_file_path." >&2
-        echo -e "GPG returned error:\n\t${error}skipping." >&2
+        echo -e "ERROR importing from $name\n - $url\nnow located in file $download_file_path." >&2
+        echo -e "GPG returned error:\n\t${error}\nskipping." >&2
     fi
 done
-
-
-# Remove temporary files
-rm "./$urls_fn"
-if [[ $keep_downloads -ne 1 ]]; then
-    rm -r ./$download_dir
-    rm $html_fn
-fi
 
 num_keyring_keys=$(gpg $gpg_options --list-keys | sed -nE "/^pub/p" | wc -l)
 num_db_entries=$(cat ./$pf_database_fn | wc -l)
 
-if [[ $num_db_entries -gt 0 && -e "./${pf_database_fn}_backup" ]]; then
-    rm "./${pf_database_fn}_backup"
+# Remove backup database if everything was successful
+[[ $num_db_entries -gt 0 && -e "./${pf_database_fn}_backup" ]] && rm "./${pf_database_fn}_backup"
+# Remove temporary files
+[[ -e ./$urls_fn ]] && rm "./$urls_fn"
+if [[ $keep_downloads -ne 1 ]]; then
+    [[ -d ./$download_dir ]] && rm -r ./$download_dir
+    [[ -e ./$html_fn ]] && rm $html_fn
+    [[ $verbose -eq 1 ]] && echo "Cleaned up downloads at './$download_dir/'"
 fi
 
 [[ $verbose -eq 1 ]] && echo -e "\nSuccessfully imported $num_imported_keys public keys into keyring, which now contains $num_keyring_keys keys.\nDatabase of names corresponding to the keys have $num_db_entries entries."
