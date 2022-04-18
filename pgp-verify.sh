@@ -37,8 +37,12 @@ function usageMessage () {
     echo -e "Verifies that the url inserted is trusted by a number of independent key authorities in order to avoid phishing attacks.\n"
     echo -e "Options:\n"
     echo -e " -i,\t--input <file path>\t\tSpecify PGP-signed mirrors file."
-    echo -e " -t,\t--connection-timeout <num>\tSet time to wait before giving up connecting to keyserver."
-    echo -e " -k,\t--keep-files\t\t\tKeep temporary files produced by output."
+    echo -e " -k,\t--keep-temporary-files\t\tDon't delete mirrors file and keyserver output after completion."
+    echo -e " --keyserver-time-limit <seconds>\tHow long to wait until aborting trying to connect to keyserver"
+    echo -e " -p,\t--port <port number>\t\tSpecify a non-default port (default is 9050) for the Tor Socks5h proxy on localhost."
+    echo -e " -s,\t--silent\t\tOnly print validation message."
+    echo -e " -t,\t--time-limit <seconds>\t\tHow many seconds to wait for a HTTP GET request using curl."
+    echo -e " -w,\t--wipe\t\tRemove all downloaded and produced files such as keyrings, mirrors file, etc. Leaving only files essential for operation."
     echo -e ""
 }
 
@@ -145,12 +149,12 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
-        -t|--connection-timeout)
-            time_limit=$2
+        --keyserver-time-limit)
+            keyserver_time_limit=$2
             shift
             shift
             ;;
-        -k|--keep-files)
+        -k|--keep-temporary-files)
             keep_temporary_files=1
             shift
             ;;
@@ -164,6 +168,18 @@ while [[ $# -gt 0 ]]; do
             cleanArchiveFiles
             [[ $verbose -eq 1 ]] && echo -e "Wiped all temporary files."
             exit 0
+            shift
+            ;;
+        -p|--port)
+            port_number=$2
+            curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
+            shift
+            shift
+            ;;
+        -t|--time-limit)
+            time_limit=$2
+            curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
+            shift
             shift
             ;;
         -*|--*)
@@ -188,9 +204,13 @@ if [[ ! -e ./$pf_database_fn || ! -e ./$keyring_folder/$pgpfail_keyring_fn ]]; t
     echo -n "Can't find pgp.fail data. Run 'update-pgpfail-keyring.sh' to re-download database and keyring? (y/n) "
     read ans
     if [[ $ans =~ [yY] ]]; then
-        echo -e "\n---------------------------------------------------------------------------"
-        ./update-pgpfail-keyring.sh
-        echo -e "---------------------------------------------------------------------------\n"
+        if [[ $verbose -eq 1 ]]; then
+            echo -e "\n---------------------------------------------------------------------------"
+            ./update-pgpfail-keyring.sh -p $port_number -t $time_limit
+            echo -e "---------------------------------------------------------------------------\n"
+        else
+            ./update-pgpfail-keyring.sh -p $port_number -t $time_limit -s
+        fi
     fi
 fi
 
@@ -199,9 +219,13 @@ if [[ ! -e ./$dnl_database_fn || ! -e ./$keyring_folder/$dnl_keyring_fn ]]; then
     echo -n "Can't find DNL data. Run 'update-dnl-keyring.sh' to re-download database and keyring? (y/n) "
     read ans
     if [[ $ans =~ [yY] ]]; then
-        echo -e "\n---------------------------------------------------------------------------"
-        ./update-dnl-keyring.sh
-        echo -e "---------------------------------------------------------------------------\n"
+        if [[ $verbose -eq 1 ]]; then
+            echo -e "\n---------------------------------------------------------------------------"
+            ./update-dnl-keyring.sh -p $port_number -t $time_limit
+            echo -e "---------------------------------------------------------------------------\n"
+        else
+            ./update-dnl-keyring.sh -p $port_number -t $time_limit -s
+        fi
     fi
 fi
 
@@ -342,9 +366,6 @@ if [[ $? -eq 0 ]]; then
         echo -e $no
     fi
 fi
-
-# TODO: Use fpr to lookup website on dnl_database. Then use the corresponding .onion site
-# if it exists and see that it is included in the mirrors list.
 
 if [[ $user_ID_DNL != "" && $user_ID != "" ]]; then
     if [[ $user_ID_DNL != $user_ID ]]; then

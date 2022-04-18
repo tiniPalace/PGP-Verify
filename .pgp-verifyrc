@@ -7,10 +7,11 @@ use_old_downloads=0
 keep_temporary_files=0
 port_number=9050
 time_limit=30
+keyserver_time_limit=30
 
 keyring_folder=".keyrings"
 dnl_keyring_fn="dnl-keyring.kbx"
-pgpfail_keyring_fn="pgp.fail-keyring.kbx"
+pgpfail_keyring_fn="pgpfail-keyring.kbx"
 openpgp_keyring_fn="openpgp-keyring.kbx"
 gpg_fn="gpg.conf"
 dnl_database_fn="dnl_database.csv"

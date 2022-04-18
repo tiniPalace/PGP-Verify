@@ -18,10 +18,52 @@ function errorExit () {
     if [[ $# -gt 0 ]]; then
         echo -e "$1" >&2
     else
-        echo -e "ERROR: '${0##*/}' needs an argument containing a valid url on the form\n:~$ ${0##*/} [-ceiklnps] http[s]://[xxx.]xxxxxxxxx.xxxx" >&2
+        echo -e "ERROR: '${0##*/}' failed to execute and needs to terminate prematurely." >&2
     fi
     exit 1
 }
+
+###############################################
+## Parsing command line arguments
+###############################################
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -u|--use-downloads)
+            use_old_downloads=1
+            shift
+            ;;
+        -k|--keep-downloads)
+            keep_downloads=1
+            shift
+            ;;
+        -s|--silent|--quiet)
+            verbose=0
+            shift
+            ;;
+        -p|--port)
+            port_number=$2
+            curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
+            shift
+            shift
+            ;;
+        -t|--time-limit)
+            time_limit=$2
+            curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
+            shift
+            shift
+            ;;
+        -*|--*)
+            echo "ERROR: Unknown option $1"
+            errorExit
+            ;;
+        *)
+            POS_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+set -- "${POS_ARGS[@]}"
 
 
 # Setup keyring file-structure.

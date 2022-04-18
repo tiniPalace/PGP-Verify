@@ -11,6 +11,50 @@ html_fn="darknetlive.html"
 html_filtered_fn="darknetlive_filtered.html"
 urls_fn="temp_urls.txt"
 
+
+###############################################
+## Parsing command line arguments
+###############################################
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -u|--use-downloads)
+            use_old_downloads=1
+            shift
+            ;;
+        -k|--keep-downloads)
+            keep_downloads=1
+            shift
+            ;;
+        -s|--silent|--quiet)
+            verbose=0
+            shift
+            ;;
+        -p|--port)
+            port_number=$2
+            curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
+            shift
+            shift
+            ;;
+        -t|--time-limit)
+            time_limit=$2
+            curl_options="-s -x socks5h://localhost:$port_number --connect-timeout $time_limit"
+            shift
+            shift
+            ;;
+        -*|--*)
+            echo "ERROR: Unknown option $1"
+            exit 1
+            ;;
+        *)
+            POS_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+set -- "${POS_ARGS[@]}"
+
+
 #######################################################
 ## Parse DNL site for pgp files.
 #######################################################
