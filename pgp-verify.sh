@@ -216,7 +216,7 @@ fi
 
 # Checking if dnl database or keyring is missing
 if [[ ! -e ./$dnl_database_fn || $(cat ./$dnl_database_fn) == "" || ! -e ./$keyring_folder/$dnl_keyring_fn ]]; then
-    echo -n "Can't find DNL data. Run 'update-dnl-keyring.sh' to re-download database and keyring.\n (y/n) "
+    echo -n "Can't find DNL data. Run 'update-dnl-keyring.sh' to re-download database and keyring? (y/n) "
     read ans
     if [[ $ans =~ [yY] ]]; then
         if [[ $verbose -eq 1 ]]; then
@@ -330,8 +330,12 @@ onion_url=""
 signedByKeyring $mirrors_fn $pgpfail_keyring_fn
 if [[ $? -eq 0 ]]; then
     user_ID=$(fprToUID $sign_fingerprint $pgpfail_keyring_fn)
-    pf_IDs=( $(grep $sign_fingerprint ./$pf_database_fn | sed -nE "s/^\"([^\"]*)\".*$/\1/p") ) 
+    pf_IDs=( $(grep $sign_fingerprint ./$pf_database_fn | sed -nE "s/^\"([^\"]*)\".*$/\1/p" | sed -E "s/ /%20/g") ) 
 fi
+# Removing HTML encoding for spaces
+for i in ${!pf_IDs[@]}; do
+    pf_IDs[$i]="$(echo ${pf_IDs[$i]} | sed -E "s/%20/ /g")"
+done
 
 ###############################################
 ## Processing darknetlive
@@ -416,7 +420,7 @@ if [[ $verbose -eq 1 ]]; then
     # Printing names associated with the key fingerprint on pgp.fail
     if [[ ${#pf_IDs[@]} -gt 0 ]]; then
         echo -e "PGP.fail identities:"
-        for ID in ${pf_IDs[@]}; do
+        for ID in "${pf_IDs[@]}"; do
             echo -e " - $ID"
         done
     fi
