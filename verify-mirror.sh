@@ -34,6 +34,8 @@ function usageMessage () {
     echo -e "This is free software: you are free to change and redistribute it."
     echo -e "There is NO WARRANTY, to the extent permitted by law.\n"
     echo -e "Usage: ${0##*/} [options] <url>"
+    echo -e "Insert the url of a page containing signed mirror urls instead of \"<url>\", or"
+    echo -e "alternatively specify a file containing this list with the \"-i <file path>\" option and insert the url your want to visit instead of \"<url>\""
     echo -e "Verifies that the url inserted is trusted by a number of independent key authorities in order to avoid phishing attacks.\n"
     echo -e "Options:\n"
     echo -e " -i,\t--input <file path>\t\tSpecify PGP-signed mirrors file."
@@ -49,9 +51,9 @@ function usageMessage () {
 # Exit with usage message.
 function errorExit () {
     if [[ $# -gt 0 ]]; then
-        echo -e "$1" >&2
+        echo -e "$1\n" >&2
     else
-        echo -e "ERROR: Invalid input for '${0##*/}'\n"
+        echo -e "ERROR: Invalid input for '${0##*/}'\n" >&2
         usageMessage
     fi
     cleanTemporaryFiles
@@ -206,10 +208,10 @@ if [[ ! -e ./$pf_database_fn || $(cat ./$pf_database_fn) == "" || ! -e ./$keyrin
     if [[ $ans =~ [yY] ]]; then
         if [[ $verbose -eq 1 ]]; then
             echo -e "\n---------------------------------------------------------------------------"
-            ./$pf_script_fn -p $port_number -t $time_limit || errorExit "ERROR: Failed to update pgpfail database and keyring. Please try to run '$pf_script_fn' manually.\n"
+            ./$pf_script_fn -p $port_number -t $time_limit || errorExit "ERROR: Failed to update pgpfail database and keyring. Please try to run '$pf_script_fn' manually."
             echo -e "---------------------------------------------------------------------------\n"
         else
-            ./$pf_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update pgpfail database and keyring. Please try to run '$pf_script_fn' manually.\n"
+            ./$pf_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update pgpfail database and keyring. Please try to run '$pf_script_fn' manually."
         fi
     fi
 fi
@@ -221,10 +223,10 @@ if [[ ! -e ./$dnl_database_fn || $(cat ./$dnl_database_fn) == "" || ! -e ./$keyr
     if [[ $ans =~ [yY] ]]; then
         if [[ $verbose -eq 1 ]]; then
             echo -e "\n---------------------------------------------------------------------------"
-            ./$dnl_script_fn -p $port_number -t $time_limit || errorExit "ERROR: Failed to update darknetlive database and keyring. Please try to run '$dnl_script_fn' manually.\n"
+            ./$dnl_script_fn -p $port_number -t $time_limit || errorExit "ERROR: Failed to update darknetlive database and keyring. Please try to run '$dnl_script_fn' manually."
             echo -e "---------------------------------------------------------------------------\n"
         else
-            ./$dnl_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update darknetlive database and keyring. Please try to run '$dnl_script_fn' manually.\n"
+            ./$dnl_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update darknetlive database and keyring. Please try to run '$dnl_script_fn' manually."
         fi
     fi
 fi
@@ -279,6 +281,7 @@ fi
 
 # Create a list of all urls contained in the signed message.
 links=$(cat ./$signed_out_fn | sed -nE "s/^[ ]*([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|([h]+[t]+[p]+[s]*[:]+\/[\/]+)?[A-Za-z0-9\.\-]+)(\/[a-zA-Z0-9\/\.:_&=\?%\+,;@\-]*)?[ ]*$/\1/p")
+[[ ${#links[@]} -eq 0 ]] && errorExit "ERROR: Could not find any valid urls in signed part of $mirrors_fn."
 
 
 ###############################################

@@ -106,7 +106,7 @@ html_names=()
 while IFS= read -r url; do
     escaped_url=$(echo $url | sed -E "s/ /%20/g")
     filename=${url##*/}
-    name=${filename%\.*}
+    name="${filename%\.*}"
     if [[ $escaped_url =~ ^.*\.txt$ ]]; then
         pgp_urls+=( "$escaped_url" )
         pgp_names+=( "$name" )
@@ -179,7 +179,7 @@ wait
 num_imported_keys=0
 for i in ${!pgp_urls[@]}; do
     download_file_path="./$download_dir/tmp_pf_pgp$i.asc"
-    name=${pgp_names[$i]}
+    name="${pgp_names[$i]}"
     url=${pgp_urls[$i]}
     # Use gpg to check that the file contains PGP keys.
     key_output=$(gpg --with-fingerprint --with-colons --show-keys $download_file_path 2> ./gpg_err)
