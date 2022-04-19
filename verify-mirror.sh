@@ -30,12 +30,12 @@ function cleanArchiveFiles () {
 }
 
 function usageMessage () {
-    echo -e "pgp-verify.sh (PGP-Verify)\nLicense: MIT License <https://opensource.org/licenses/MIT>"
+    echo -e "verify-mirror.sh (PGP-Verify)\nLicense: MIT License <https://opensource.org/licenses/MIT>"
     echo -e "This is free software: you are free to change and redistribute it."
     echo -e "There is NO WARRANTY, to the extent permitted by law.\n"
     echo -e "Usage: ${0##*/} [options] <url>"
     echo -e "Insert the url of a page containing signed mirror urls instead of \"<url>\", or"
-    echo -e "alternatively specify a file containing this list with the \"-i <file path>\" option and insert the url your want to visit instead of \"<url>\""
+    echo -e "alternatively specify a file containing this list with the \"-i <file path>\" option and insert the url you want to visit instead of \"<url>\""
     echo -e "Verifies that the url inserted is trusted by a number of independent key authorities in order to avoid phishing attacks.\n"
     echo -e "Options:\n"
     echo -e " -i,\t--input <file path>\t\tSpecify PGP-signed mirrors file."
