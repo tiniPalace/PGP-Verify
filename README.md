@@ -92,8 +92,8 @@ go to the folder with the `.sh` files and run
 On first use, PGP-Verify will ask to contact the key authorities in order to obatin trusted keys. Answer
 `'y'` when prompted to do this as shown in the figure below.
 
-![Prompt for building PGP.fail keyring](Figs/PGPfail_prompt.png "PGP.fail prompt")
-![Output of update-PGPfail-keyring.sh](Figs/PGPfail_run.png "PGP.fail output")
+![Prompt for building PGP.fail keyring](Figs/pgpfail_prompt.png "PGP.fail prompt")
+![Output of update-PGPfail-keyring.sh](Figs/pgpfail_run.png "PGP.fail output")
 ![Prompt for building dnl keyring](Figs/dnl_prompt.png "darknetlive prompt")
 ![Output of update-dnl-keyring.sh](Figs/dnl_run.png "darknetlive output")
 
