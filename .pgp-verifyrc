@@ -6,7 +6,7 @@ keep_downloads=0
 use_old_downloads=0
 keep_temporary_files=0
 port_number=9050
-time_limit=30
+time_limit=90
 keyserver_time_limit=30
 
 keyring_folder=".keyrings"

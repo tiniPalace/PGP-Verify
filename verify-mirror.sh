@@ -213,6 +213,8 @@ if [[ ! -e ./$pf_database_fn || $(cat ./$pf_database_fn) == "" || ! -e ./$keyrin
         else
             ./$pf_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update pgpfail database and keyring. Please try to run '$pf_script_fn' manually."
         fi
+    else
+        exit 1
     fi
 fi
 
@@ -228,6 +230,8 @@ if [[ ! -e ./$dnl_database_fn || $(cat ./$dnl_database_fn) == "" || ! -e ./$keyr
         else
             ./$dnl_script_fn -p $port_number -t $time_limit -s || errorExit "ERROR: Failed to update darknetlive database and keyring. Please try to run '$dnl_script_fn' manually."
         fi
+    else
+        exit 1
     fi
 fi
 
