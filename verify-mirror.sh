@@ -251,7 +251,7 @@ if [[ $validation_url =~ ^([h]+[t]+[p]+[s]*[:]+\/[\/]+)?([a-zA-Z0-9\.\-]+|[a-z2-
         if [[ $http_code == "200" ]]; then
             chmod 600 $mirrors_fn
         else
-            errorExit
+            errorExit "ERROR: Failed to download mirrors file from $validation_url."
         fi
     elif [[ -e $custom_mirrors ]]; then
         mirrors_fn=$custom_mirrors
@@ -387,7 +387,7 @@ fi
 ###############################################
 
 echo "keyserver hkp://zkaan2xfbuxia2wpf7ofnkbz6r5zdbbvxbunvp5g2iebopbfc4iqmbad.onion" > ./$keyring_folder/$gpg_fn
-timeout --preserve-status ${time_limit}s gpg $gpg_options --keyring ./$keyring_folder/$openpgp_keyring_fn --options ./$keyring_folder/$gpg_fn --auto-key-locate keyserver --recv-keys $sign_fingerprint &> ./$keyserver_output_fn
+timeout --preserve-status ${keyserver_time_limit}s gpg $gpg_options --keyring ./$keyring_folder/$openpgp_keyring_fn --options ./$keyring_folder/$gpg_fn --auto-key-locate keyserver --recv-keys $sign_fingerprint &> ./$keyserver_output_fn
 ret_status=$?
 [[ $verbose -eq 1 ]] && echo -en "Signing key on openpgp:\t\t"
 if [[ $ret_status -eq 0 ]]; then

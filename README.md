@@ -85,7 +85,10 @@ and saving it somewhere on your machine. The navigate to the PGP-Verify folder a
 ./verify-mirror.sh -i <path to locally downloaded mirrors file> <url to site you want to go to>
 ```
 
-Other options are enumerated below.
+Other options are enumerated below and can be included through the syntax
+```
+./verify-mirror.sh [options] <url>
+```
 
 ## How does it work?
 

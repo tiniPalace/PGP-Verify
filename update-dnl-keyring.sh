@@ -2,8 +2,8 @@
 
 source .pgp-verifyrc
 
-key_authority_url="http://darkzzx4avcsuofgfez5zq75cqc4mprjvfqywo45dfcaxrwqg6qrlfid.onion/onions/"
-key_authority_url_regex=$(echo $key_authority_url | sed -E 's/\//\\\//g')
+ka_dnl_url="http://darkzzx4avcsuofgfez5zq75cqc4mprjvfqywo45dfcaxrwqg6qrlfid.onion/onions/"
+ka_dnl_url_regex=$(echo $ka_dnl_url | sed -E 's/\//\\\//g')
 
 gpg_options="--no-default-keyring --keyring ./$keyring_folder/$dnl_keyring_fn --homedir ./$keyring_folder"
 
@@ -62,7 +62,7 @@ set -- "${POS_ARGS[@]}"
 # Only download html file when needed.
 if [[ ! -e $html_fn || $use_old_downloads -ne 1 ]]; then
     [[ $verbose -eq 1 ]] && echo "Downloading main html file"
-    curl $curl_options -H "$curl_headers" http://darkzzx4avcsuofgfez5zq75cqc4mprjvfqywo45dfcaxrwqg6qrlfid.onion/onions/ > $html_fn
+    curl $curl_options -H "$curl_headers" $ka_dnl_url > $html_fn
 
     [[ $verbose -eq 1 ]] && echo "Filtering file for valid links and building internal arrays."
     # Filter out section containing urls
