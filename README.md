@@ -64,13 +64,13 @@ which will create an `PGP-Verify-main` directory in your download folder.
 
 #### Install to command line
 
-You might want to be able to run `verify-mirror` on the command line at any time, without having to navigate to the
+You might want to be able to run `verify-mirror` on the command line from any location, without having to navigate to the
 download folder and running the scripts with `./verify-mirror.sh`. To do this, simply run the script
 ```
-<download directory>/install-bashrc.sh
+./install-bashrc.sh
 ```
 
-This will add a function `verify-mirror` to your `.bashrc` file which will make you able to run the command at any time.
+This will add a function `verify-mirror` to your `.bashrc` file and set executable permission on the scripts in the download folder.
 
 
 If you are
@@ -152,17 +152,17 @@ checks that the url you inserted actually matches one found in the signed list o
 ## Options
 
 - `-i, --input <file path>`
-Specify PGP-signed mirrors file."
+Specify PGP-signed mirrors file.
 - `-k, --keep-temporary-files`
-Don't delete mirrors file and keyserver output after completion."
+Don't delete mirrors file and keyserver output after completion.
 - `--keyserver-time-limit <seconds>`
-How long to wait until aborting trying to connect to keyserver"
+How long to wait until aborting trying to connect to keyserver
 - `-p,--port <port number>`
-Specify a non-default port (default is 9050) for the Tor Socks5h proxy on localhost."
+Specify a non-default port (default is 9050) for the Tor Socks5h proxy on localhost.
 - `-s,--silent`
-Only print validation message."
+Only print validation message.
 - `-t,--time-limit <seconds>`
-How many seconds to wait for a HTTP GET request using curl."
+How many seconds to wait for a HTTP GET request using curl.
 - `-w,--wipe`
-Remove all downloaded and produced files such as keyrings, mirrors file, etc. Leaving only files essential for operation."
+Remove all downloaded and produced files such as keyrings, mirrors file, etc. Leaving only files essential for operation.
 
