@@ -284,8 +284,8 @@ if [[ $gpg_error != "" ]]; then
 fi
 
 # Create a list of all urls contained in the signed message.
-links=( $(cat ./$signed_out_fn | sed -nE "s/^[ ]*([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|([h]+[t]+[p]+[s]*[:]+\/[\/]+)?[A-Za-z0-9\.\-]+)(\/[a-zA-Z0-9\/\.:_&=\?%\+,;@\-]*)?[ ]*$/\1/p") )
-links+=( $(cat ./$signed_out_fn | sed -nE "s/^[^\# ][^\#]*([h]+[t]+[p]+[s]*[:]+\/[\/]+[a-Za-z0-9\.\-]+)[ ]*.*$/\1/p") )
+links=( $(cat ./$signed_out_fn | sed -nE "s/^[ ]*([a-z2-7]{56}\.onion|[a-z2-7]{16}\.onion|([h]+[t]+[p]+[s]*[:]+\/[\/]+)?[A-Za-z0-9\.\-]+)(\/[a-zA-Z0-9\/\.:_&=\?%\+,;@\-]*)?[ ]*[\n\r]*$/\1/p") )
+links+=( $(cat ./$signed_out_fn | sed -nE "s/^[^\# ][^\#]*([h]+[t]+[p]+[s]*[:]+\/[\/]+[a-Za-z0-9\.\-]+)[ ]*.*[\n\r]*$/\1/p") )
 [[ ${#links[@]} -eq 0 ]] && errorExit "ERROR: Could not find any valid urls in signed part of $mirrors_fn."
 
 
