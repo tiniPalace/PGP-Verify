@@ -444,11 +444,13 @@ if [[ $verbose -eq 1 ]]; then
     echo -e "---------------------------------------------------------------------------\n"
 fi
 
-echo -en "Valid URL:\t\t\t"
+echo -en "Valid URL:\t"
 if [[ $validation_url_in_list -eq 1 && $signed_by_authority -gt 0 ]]; then
     echo -e "$ok: $signed_by_authority/3"
 else
     echo -e $no
+    [[ $validation_url_in_list -ne 1 && $verbose -eq 1 ]] && echo " - URL is not in the list of mirrors."
+    [[ $signed_by_authority -le 0 && $verbose -eq 1 ]] && echo " - List of mirrors not signed by any known key authority."
 fi
 
 cleanTemporaryFiles
