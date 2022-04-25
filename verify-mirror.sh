@@ -7,6 +7,8 @@ keyserver_output_fn="keyserver_output.txt"
 gpg_options="--homedir $keyring_folder --no-default-keyring" 
 signed_by_authority=0
 custom_mirrors=""
+check_openpgp=1
+total_KAs=2
 
 
 ###############################################
@@ -40,11 +42,12 @@ function usageMessage () {
     echo -e "Options:\n"
     echo -e " -i,\t--input <file path>\t\tSpecify PGP-signed mirrors file."
     echo -e " -k,\t--keep-temporary-files\t\tDon't delete mirrors file and keyserver output after completion."
-    echo -e " --keyserver-time-limit <seconds>\tHow long to wait until aborting trying to connect to keyserver"
+    echo -e " \t--keyserver-time <seconds>\tHow long to wait until aborting trying to connect to keyserver"
     echo -e " -p,\t--port <port number>\t\tSpecify a non-default port (default is 9050) for the Tor Socks5h proxy on localhost."
-    echo -e " -s,\t--silent\t\tOnly print validation message."
+    echo -e " -s,\t--silent\t\t\tOnly print validation message."
+    echo -e " \t--skip-openpgp\t\t\tDo not use openpgp public key server as a key-authority."
     echo -e " -t,\t--time-limit <seconds>\t\tHow many seconds to wait for a HTTP GET request using curl."
-    echo -e " -w,\t--wipe\t\tRemove all downloaded and produced files such as keyrings, mirrors file, etc. Leaving only files essential for operation."
+    echo -e " -w,\t--wipe\t\t\t\tRemove all downloaded and produced files such as keyrings, mirrors file, etc. Leaving only files essential for operation."
     echo -e ""
 }
 
@@ -151,7 +154,7 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
-        --keyserver-time-limit)
+        --keyserver-time)
             keyserver_time_limit=$2
             shift
             shift
@@ -162,6 +165,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -s|--silent|--quiet)
             verbose=0
+            shift
+            ;;
+        --skip-openpgp)
+            check_openpgp=0
             shift
             ;;
         -w|--wipe)
@@ -391,19 +398,23 @@ fi
 ## Checking openpgp keyserver
 ###############################################
 
-echo "keyserver hkp://zkaan2xfbuxia2wpf7ofnkbz6r5zdbbvxbunvp5g2iebopbfc4iqmbad.onion" > ./$keyring_folder/$gpg_fn
-timeout --preserve-status ${keyserver_time_limit}s gpg $gpg_options --keyring ./$keyring_folder/$openpgp_keyring_fn --options ./$keyring_folder/$gpg_fn --auto-key-locate keyserver --recv-keys $sign_fingerprint &> ./$keyserver_output_fn
-ret_status=$?
-[[ $verbose -eq 1 ]] && echo -en "Signing key on openpgp:\t\t"
-if [[ $ret_status -eq 0 ]]; then
-    was_skipped=$(cat ./$keyserver_output_fn | sed -nE "/skipped/p")
-    if [[ $was_skipped == "" ]]; then
-        signedByKeyring $mirrors_fn $openpgp_keyring_fn
+if [[ $check_openpgp -eq 1 ]]; then
+
+    total_KAs=$(( total_KAs + 1 ))
+    echo "keyserver hkp://zkaan2xfbuxia2wpf7ofnkbz6r5zdbbvxbunvp5g2iebopbfc4iqmbad.onion" > ./$keyring_folder/$gpg_fn
+    timeout --preserve-status ${keyserver_time_limit}s gpg $gpg_options --keyring ./$keyring_folder/$openpgp_keyring_fn --options ./$keyring_folder/$gpg_fn --auto-key-locate keyserver --recv-keys $sign_fingerprint &> ./$keyserver_output_fn
+    ret_status=$?
+    [[ $verbose -eq 1 ]] && echo -en "Signing key on openpgp:\t\t"
+    if [[ $ret_status -eq 0 ]]; then
+        was_skipped=$(cat ./$keyserver_output_fn | sed -nE "/skipped/p")
+        if [[ $was_skipped == "" ]]; then
+            signedByKeyring $mirrors_fn $openpgp_keyring_fn
+        else
+            echo -e "$partially:\tExists, but without a corresponding User ID. Could therefore not check signature."
+        fi
     else
-        echo -e "$partially:\tExists, but without a corresponding User ID. Could therefore not check signature."
+        echo -e $no
     fi
-else
-    echo -e $no
 fi
 
 
@@ -446,7 +457,7 @@ fi
 
 echo -en "Valid URL:\t"
 if [[ $validation_url_in_list -eq 1 && $signed_by_authority -gt 0 ]]; then
-    echo -e "$ok: $signed_by_authority/3"
+    echo -e "$ok: $signed_by_authority/$total_KAs"
 else
     echo -e $no
     [[ $validation_url_in_list -ne 1 && $verbose -eq 1 ]] && echo " - URL is not in the list of mirrors."
